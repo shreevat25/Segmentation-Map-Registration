@@ -12,19 +12,19 @@ import wandb
 torch.cuda.empty_cache()
 
 wandb.init(project='seg-deformation')
-def train(model, stn, dataloader, optimizer, device, dice_weight=1.0, smooth_weight=0.1):
+def train(model, stn, dataloader, optimizer, device, epoch, max_epochs=50, dice_weight=1.0, smooth_weight=0.1):
     model.train()
     total_loss = 0
     dice_loss_total = 0
     smooth_loss_total = 0
-
-    for moving, fixed in tqdm(dataloader, desc='Training Batches', leave=False):
+    
+    for moving, fixed in tqdm(dataloader, desc=f'Training for epoch: {epoch+1}/{max_epochs}', leave=False):
         moving = moving.to(device)
         fixed = fixed.to(device)
 
-        input_to_model = torch.cat([moving, fixed], dim=1)  # Shape: (B, 8, 64, 64, 64)
+        input_ = torch.cat([moving, fixed], dim=1)  # Shape: (B, 8, 64, 64, 64)
        
-        deformation_field = model(input_to_model)
+        deformation_field = model(input_)
         
         warped_template = stn(moving, deformation_field)
 
@@ -36,6 +36,7 @@ def train(model, stn, dataloader, optimizer, device, dice_weight=1.0, smooth_wei
         loss.backward()
         optimizer.step()
 
+        # Accumulate losses
         total_loss += loss.item()
         dice_loss_total += dice_loss_val.item()
         smooth_loss_total += smooth_loss_val.item()
@@ -54,20 +55,21 @@ def main():
 
     device = 'cuda:3'
 
+    # Load dataset 
     print("Loading dataset")
     train_dataset = SegDataset(args.train_txt, args.template_path)
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     print("Dataset loaded.")
 
-
+    # Initialize model and components
     model = UNet(in_channels=8, out_channels=3).to(device)
     stn = SpatialTransformer().to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
-
-    for epoch in tqdm(range(args.epochs), desc='Training Epochs'):
+    # Training loop
+    for epoch in range(args.epochs):
         avg_loss, avg_dice, avg_smooth = train(
-            model, stn, train_loader, optimizer, device  
+            model, stn, train_loader, optimizer, device, epoch
         )
         print(f"Epoch {epoch + 1}/{args.epochs}, Loss: {avg_loss:.4f}, Dice Loss: {avg_dice:.4f}, Smoothing Loss: {avg_smooth:.4f}")
         
@@ -83,7 +85,7 @@ def main():
             torch.save(model.state_dict(), model_path)
             print(f"Model saved to {model_path}")
 
-
+    # Save model
     torch.save(model.state_dict(), args.save_model_path)
     print(f"Model saved to {args.save_model_path}")
 

@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class UNet(nn.Module):
-    def __init__(self):
+    def __init__(self, in_channels, out_channels):
         super(UNet, self).__init__()
 
         def conv_block(in_channels, out_channels):
@@ -20,7 +20,7 @@ class UNet(nn.Module):
             return nn.ConvTranspose3d(in_channels, out_channels, kernel_size=2, stride=2)
 
         # Encoder
-        self.enc1 = conv_block(8, 32)  # 8 channels: template + fixed given together as input 4 channels each
+        self.enc1 = conv_block(in_channels, 32)  # 8 channels: template + fixed given together as input 4 channels each
         self.pool1 = nn.MaxPool3d(kernel_size=2, stride=2)
         self.enc2 = conv_block(32, 64)
         self.pool2 = nn.MaxPool3d(kernel_size=2, stride=2)
@@ -81,7 +81,7 @@ class SpatialTransformer(nn.Module):
         grid = F.affine_grid(torch.eye(3, 4).unsqueeze(0).repeat(B, 1, 1).to(moving.device),
                              moving.size(), align_corners=False)
 
-        deformation = deformation.permute(0, 2, 3, 4, 1) 
+        deformation = deformation.permute(0, 2, 3, 4, 1)  # (B, H, W, D, 3)
         warped_grid = grid + deformation
 
         warped = F.grid_sample(moving, warped_grid, mode='bilinear', padding_mode='border', align_corners=False)
@@ -98,7 +98,7 @@ class DeformationPredictionModel(nn.Module):
         x = torch.cat((moving, fixed), dim=1)
         deformation_field = self.unet(x)
 
-        # Warp the predicted deformation field on top of the moving seg map
+        # Warp the predicted deformation field on top of the moving
         warped_moving = self.spatial_transformer(moving, deformation_field)
 
         return warped_moving, deformation_field

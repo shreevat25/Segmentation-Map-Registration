@@ -81,7 +81,7 @@ class SpatialTransformer(nn.Module):
         grid = F.affine_grid(torch.eye(3, 4).unsqueeze(0).repeat(B, 1, 1).to(moving.device),
                              moving.size(), align_corners=False)
 
-        deformation = deformation.permute(0, 2, 3, 4, 1)  # (B, H, W, D, 3)
+        deformation = deformation.permute(0, 2, 3, 4, 1) 
         warped_grid = grid + deformation
 
         warped = F.grid_sample(moving, warped_grid, mode='bilinear', padding_mode='border', align_corners=False)

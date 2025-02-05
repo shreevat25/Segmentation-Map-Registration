@@ -11,6 +11,7 @@ import os
 import wandb
 torch.cuda.empty_cache()
 
+#logging
 wandb.init(project='seg-deformation')
 def train(model, stn, dataloader, optimizer, device, epoch, max_epochs=50, dice_weight=1.0, smooth_weight=0.1):
     model.train()
@@ -22,7 +23,7 @@ def train(model, stn, dataloader, optimizer, device, epoch, max_epochs=50, dice_
         moving = moving.to(device)
         fixed = fixed.to(device)
 
-        input_ = torch.cat([moving, fixed], dim=1)  # Shape: (B, 8, 64, 64, 64)
+        input_ = torch.cat([moving, fixed], dim=1)  # Shape: (B, 8, 64, 64, 64), would keep batch size as 1 for now, otherwise might crash
        
         deformation_field = model(input_)
         
@@ -36,7 +37,7 @@ def train(model, stn, dataloader, optimizer, device, epoch, max_epochs=50, dice_
         loss.backward()
         optimizer.step()
 
-        # Accumulate losses
+     
         total_loss += loss.item()
         dice_loss_total += dice_loss_val.item()
         smooth_loss_total += smooth_loss_val.item()
@@ -53,20 +54,20 @@ def main():
     parser.add_argument('--save_model_path', type=str, default='./trained_model.pth', help='Path to save the trained model')
     args = parser.parse_args()
 
-    device = 'cuda:3'
+    device = 'cuda:3' #change accordingly
 
-    # Load dataset 
+  
     print("Loading dataset")
     train_dataset = SegDataset(args.train_txt, args.template_path)
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     print("Dataset loaded.")
 
-    # Initialize model and components
+    # U-Net to predict deformations, STN to warp the deformations on top of the template
     model = UNet(in_channels=8, out_channels=3).to(device)
     stn = SpatialTransformer().to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
-    # Training loop
+
     for epoch in range(args.epochs):
         avg_loss, avg_dice, avg_smooth = train(
             model, stn, train_loader, optimizer, device, epoch
@@ -79,13 +80,13 @@ def main():
             'dice_loss': avg_dice,
             'smoothing_loss': avg_smooth
         })
-               
+        #save the model every 10 epochs
         if (epoch + 1) % 10 == 0:
             model_path = f'{args.save_model_path}_epoch_{epoch + 1}.pth'
             torch.save(model.state_dict(), model_path)
             print(f"Model saved to {model_path}")
 
-    # Save model
+    
     torch.save(model.state_dict(), args.save_model_path)
     print(f"Model saved to {args.save_model_path}")
 

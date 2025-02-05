@@ -47,9 +47,11 @@ def train(model, stn, dataloader, optimizer, device, epoch, max_epochs=50, dice_
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--train_txt', type=str, default='/local/scratch/v_karthik_mohan/train_npy.txt', help='Path to the training file listing subject paths')
+    #each line contains path to one hot encoded subject
     parser.add_argument('--template_path', type=str, default='/local/scratch/v_karthik_mohan/data/OASIS_OAS1_0406_MR1/seg4_onehot.npy', help='Path to the template segmentation map')
+    #for now template is a segmentation map from the dataset itself, ensure it is excluded from training.
     parser.add_argument('--lr', type=float, default=1e-4, help='Learning rate')
-    parser.add_argument('--batch_size', type=int, default=1, help='Batch size for training')
+    parser.add_argument('--batch_size', type=int, default=1, help='Batch size for training') 
     parser.add_argument('--epochs', type=int, default=50, help='Number of training epochs')
     parser.add_argument('--save_model_path', type=str, default='./trained_model.pth', help='Path to save the trained model')
     args = parser.parse_args()

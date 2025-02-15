@@ -5,7 +5,7 @@ def test_loss_functions():
     print("Testing loss functions...")
 
     # Simple synthetic test cases
-    pred = torch.rand((1, 3, 32, 32, 32))  # Random deformation field, we need to replace this with actual MRI data soon
+    pred = torch.rand((1, 3, 32, 32, 32))  # Random deformation field, we need to replace this section with actual MRI data soon
     target = torch.rand((1, 3, 32, 32, 32))
 
     deformation_field = torch.rand((1, 3, 32, 32, 32))
@@ -19,7 +19,7 @@ def test_loss_functions():
     print(f"Hausdorff Distance Loss: {hausdorff_loss.item():.6f}")
     print(f"Surface Loss: {surf_loss.item():.6f}")
     print(f"Bending Energy Loss: {bend_loss.item():.6f}")
-
+    # More comprehensive testing is needed, also we can keep adding other loss functions here as we go
     assert chamfer_loss >= 0, "Chamfer loss should be non-negative"
     assert hausdorff_loss >= 0, "Hausdorff loss should be non-negative"
     assert surf_loss >= 0, "Surface loss should be non-negative"

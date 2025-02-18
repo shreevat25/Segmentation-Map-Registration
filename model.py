@@ -68,7 +68,7 @@ class UNet(nn.Module):
         up1 = self.up1(d2)
         d1 = self.dec1(torch.cat((up1, e1), dim=1))
 
-        deformation_field = self.out_conv(d1)
+        deformation_field = torch.tanh(self.out_conv(d1))
         return deformation_field
 
 class SpatialTransformer(nn.Module):
@@ -81,10 +81,10 @@ class SpatialTransformer(nn.Module):
         grid = F.affine_grid(torch.eye(3, 4).unsqueeze(0).repeat(B, 1, 1).to(moving.device),
                              moving.size(), align_corners=False)
 
-        deformation = deformation.permute(0, 2, 3, 4, 1) 
+        deformation = deformation.permute(0, 2, 3, 4, 1)  # (B, H, W, D, 3)
         warped_grid = grid + deformation
 
-        warped = F.grid_sample(moving, warped_grid, mode='bilinear', padding_mode='border', align_corners=False)
+        warped = F.grid_sample(moving, warped_grid, mode='nearest', padding_mode='border', align_corners=False)
         return warped
 
 class DeformationPredictionModel(nn.Module):

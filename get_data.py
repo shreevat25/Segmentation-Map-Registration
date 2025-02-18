@@ -1,4 +1,3 @@
-# get_data.py
 import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset
@@ -19,8 +18,7 @@ class SegDataset(Dataset):
         self.moving_template = F.interpolate(
             self.moving_template.unsqueeze(0),  # Add batch dimension
             size=target_size,
-            mode='nearest',  # Use 'trilinear' for 3D data
-            align_corners=False
+            mode='nearest'  # Use 'nearest' for one-hot encoded segmentations
         ).squeeze(0)  # Remove batch dimension
 
         self.target_size = target_size
@@ -37,8 +35,7 @@ class SegDataset(Dataset):
         fixed_map = F.interpolate(
             fixed_map.unsqueeze(0),  # Add batch dimension
             size=self.target_size,
-            mode='trilinear',  # Use 'trilinear' for 3D data
-            align_corners=False
+            mode='nearest'  # Use 'nearest' for one-hot encoded segmentations
         ).squeeze(0)  # Remove batch dimension
 
         return self.moving_template, fixed_map

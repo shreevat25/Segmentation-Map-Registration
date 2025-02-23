@@ -72,7 +72,7 @@ def main():
 
     for epoch in range(args.epochs):
         avg_loss, avg_dice, avg_smooth = train(
-            model, stn, train_loader, optimizer, device, epoch
+            model, stn, train_loader, optimizer, device, epoch,args.epoch
         )
         print(f"Epoch {epoch + 1}/{args.epochs}, Loss: {avg_loss:.4f}, Dice Loss: {avg_dice:.4f}, Smoothing Loss: {avg_smooth:.4f}")
         

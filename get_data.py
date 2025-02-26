@@ -5,7 +5,7 @@ import numpy as np
 import os
 
 class SegDataset(Dataset):
-    def __init__(self, data_list_file: str, template_path: str, target_size=(64, 64, 64)):
+    def __init__(self, data_list_file: str, template_path: str, target_size=(128,128,128)):
         # Read subject paths from txt file where each line is a subject path
         with open(data_list_file, 'r') as file:
             self.subject_paths = file.read().splitlines()

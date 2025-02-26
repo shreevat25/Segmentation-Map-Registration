@@ -35,6 +35,7 @@ def train(model, stn, dataloader, optimizer, device, epoch, max_epochs=50, dice_
 
         optimizer.zero_grad()
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0) 
         optimizer.step()
 
      
@@ -50,10 +51,10 @@ def main():
     #each line contains path to one hot encoded subject
     parser.add_argument('--template_path', type=str, default='/local/scratch/v_karthik_mohan/data/OASIS_OAS1_0406_MR1/seg4_onehot.npy', help='Path to the template segmentation map')
     #for now template is a segmentation map from the dataset itself, ensure it is excluded from training.
-    parser.add_argument('--lr', type=float, default=1e-4, help='Learning rate')
+    parser.add_argument('--lr', type=float, default=3e-4, help='Learning rate')
     parser.add_argument('--batch_size', type=int, default=1, help='Batch size for training') 
     parser.add_argument('--epochs', type=int, default=50, help='Number of training epochs')
-    parser.add_argument('--save_model_path', type=str, default='./trained_model.pth', help='Path to save the trained model')
+    parser.add_argument('--save_model_path', type=str, default='weights2/', help='Path to save the trained model')
     args = parser.parse_args()
 
     device = 'cuda:3' #change accordingly
@@ -83,7 +84,7 @@ def main():
             'smoothing_loss': avg_smooth
         })
         #save the model every 10 epochs
-        if (epoch + 1) % 10 == 0:
+        if (epoch + 1) % 50 == 0:
             model_path = f'{args.save_model_path}_epoch_{epoch + 1}.pth'
             torch.save(model.state_dict(), model_path)
             print(f"Model saved to {model_path}")

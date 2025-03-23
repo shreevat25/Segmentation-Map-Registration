@@ -87,19 +87,3 @@ class SpatialTransformer(nn.Module):
 
         warped = F.grid_sample(moving, warped_grid, mode='bilinear', padding_mode='border', align_corners=False)
         return warped
-
-class DeformationPredictionModel(nn.Module):
-    def __init__(self):
-        super(DeformationPredictionModel, self).__init__()
-        self.unet = UNet()
-        self.spatial_transformer = SpatialTransformer()
-
-    def forward(self, moving, fixed):
-    
-        x = torch.cat((moving, fixed), dim=1)
-        deformation_field = self.unet(x)
-
-        # Warp the predicted deformation field on top of the moving
-        warped_moving = self.spatial_transformer(moving, deformation_field)
-
-        return warped_moving, deformation_field

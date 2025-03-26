@@ -92,7 +92,7 @@ import torch.nn.functional as F
 
 class Affine(nn.Module):
     def __init__(self, in_channels=8):
-        super(AffineRegistration, self).__init__()
+        super(Affine, self).__init__()
         self.conv = nn.Sequential(
             nn.Conv3d(in_channels, 16, kernel_size=3, padding=1),
             nn.InstanceNorm3d(16),

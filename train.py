@@ -23,26 +23,25 @@ def train(model, stn, dataloader, scaler,scheduler,optimizer, device, epoch, max
     for moving, fixed in tqdm(dataloader, desc=f'Training for epoch: {epoch+1}/{max_epochs}', leave=False):
         moving = moving.to(device)
         fixed = fixed.to(device)
-
+        optimizer.zero_grad()
         input_ = torch.cat([moving, fixed], dim=1)  # Shape: (B, 8, 64, 64, 64), would keep batch size as 1 for now, otherwise might crash
         deformation_field = model(input_)
         
         warped = stn(moving, deformation_field)
         loss = composite_loss(warped, fixed, deformation_field)
-        # dice_loss_val = dice_loss(warped_template, fixed)
-        # smooth_loss_val = smoothing_loss(deformation_field)
-        # loss = dice_weight * dice_loss_val + smooth_weight * smooth_loss_val
-        optimizer.zero_grad()   
+
+
         scaler.scale(loss).backward()
-        scaler.step(optimizer)
-        scaler.update()
-        scheduler.step()
         torch.nn.utils.clip_grad_norm_(
             model.parameters(), 
             max_norm=1.0, 
             norm_type=2.0
         )
 
+        scaler.step(optimizer)
+        scaler.update()
+        scheduler.step()
+   
         # optimizer.zero_grad()
         # loss.backward()
         # torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0) 
@@ -77,7 +76,7 @@ def main():
     scaler = GradScaler()
     # U-Net to predict deformations, STN to warp the deformations on top of the template
     model = UNet(in_channels=10, out_channels=3).to(device)
-    stn = SpatialTransformer().to(device)
+    stn = SpatialTransformer(size=(128,128,128), device=device).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
@@ -98,7 +97,7 @@ def main():
             'loss': avg_loss,
            
         })
-
+        #save the model every 10 epochs
         if (epoch + 1) % 50 == 0:
             model_path = f'{args.save_model_path}_epoch_{epoch + 1}.pth'
             torch.save(model.state_dict(), model_path)

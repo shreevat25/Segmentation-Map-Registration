@@ -36,6 +36,34 @@ def jacobian_det_loss(flow):
 def cross_entropy_loss(pred, target):
     return F.cross_entropy(pred, target.argmax(dim=1))
 
+#  Penalizes multiple labels being mapped to the same voxel
+def label_overlap_loss(warped):
+    """
+    warped: (B, C, D, H, W) — one-hot warped prediction
+    penalizes voxels that belong to more than one class after warping
+    """
+    label_sum = torch.sum(warped, dim=1)  # (B, D, H, W)
+    collision = torch.clamp(label_sum - 1, min=0)  # overlap error
+    return torch.mean(collision)
+
+#  Optional: smoothness via first-order gradient variation
+def deformation_direction_variation(flow):
+    """
+    Penalizes rapid change in deformation direction.
+    flow: (B, 3, D, H, W)
+    """
+    grad_x = flow[:, :, 1:, :, :] - flow[:, :, :-1, :, :]
+    grad_y = flow[:, :, :, 1:, :] - flow[:, :, :, :-1, :]
+    grad_z = flow[:, :, :, :, 1:] - flow[:, :, :, :, :-1]
+
+    # Compute means independently to avoid shape mismatch
+    loss_x = torch.mean(grad_x ** 2)
+    loss_y = torch.mean(grad_y ** 2)
+    loss_z = torch.mean(grad_z ** 2)
+
+    return loss_x + loss_y + loss_z
+
+
 def composite_loss(pred, target, flow):
     return (
         0.8 * dice_loss(pred, target) + 

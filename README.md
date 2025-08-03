@@ -1,4 +1,4 @@
-**Unsupervised Segmentation Map Registration**
+# Unsupervised Segmentation Map Registration
 
 This repository implements an unsupervised deep learning framework for registering a surface-derived segmentation template to a target segmentation volume. The model learns a 3D deformation field using volumetric similarity and smoothness constraints, without requiring paired training data. It supports multiple surface-aware loss functions and operates on medical datasets such as OASIS.
 
